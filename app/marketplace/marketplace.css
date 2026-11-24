@@ -1,0 +1,1858 @@
+
+/* =========================================================
+   TasteAI Enterprise — Restaurant Marketplace
+   File: app/marketplace/marketplace.css
+   ========================================================= */
+
+:root {
+  --mp-green: #187744;
+  --mp-green-dark: #105b34;
+  --mp-green-light: #e5f5e9;
+  --mp-ink: #17231c;
+  --mp-muted: #64748b;
+  --mp-border: #e2e8f0;
+  --mp-background: #f6f8f4;
+  --mp-white: #ffffff;
+  --mp-shadow: 0 8px 28px rgba(20, 45, 29, 0.07);
+}
+
+/* Reset */
+
+.marketplace-page,
+.marketplace-page * {
+  box-sizing: border-box;
+}
+
+.marketplace-page {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--mp-background);
+  color: var(--mp-ink);
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+
+.marketplace-page img {
+  max-width: 100%;
+}
+
+.marketplace-page a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.marketplace-page button,
+.marketplace-page input,
+.marketplace-page select {
+  font: inherit;
+}
+
+/* Header */
+
+.topbar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  width: 100%;
+  min-height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px clamp(18px, 5vw, 76px);
+  border-bottom: 1px solid var(--mp-border);
+  background: var(--mp-white);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--mp-ink);
+  text-decoration: none;
+}
+
+.brand-icon {
+  display: flex;
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--mp-green);
+  color: var(--mp-white);
+}
+
+.brand > span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand strong {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+}
+
+.brand small {
+  margin-top: 3px;
+  color: var(--mp-muted);
+  font-size: 12px;
+}
+
+.top-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--mp-green);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.top-link:hover {
+  color: var(--mp-green-dark);
+}
+
+/* Hero */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 76px 24px 82px;
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(199, 232, 190, 0.25),
+      transparent 30%
+    ),
+    linear-gradient(125deg, #102e20 0%, #145b36 60%, #187744 100%);
+  color: var(--mp-white);
+}
+
+.hero::after {
+  position: absolute;
+  right: -90px;
+  bottom: -190px;
+  width: 420px;
+  height: 420px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mp-green);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.hero .eyebrow {
+  color: #c5f1d2;
+}
+
+.hero h1 {
+  max-width: 760px;
+  margin: 18px 0;
+  color: var(--mp-white);
+  font-size: clamp(34px, 5vw, 58px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1.1;
+}
+
+.hero p {
+  max-width: 650px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.hero-button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 26px;
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: var(--mp-white);
+  color: var(--mp-green-dark);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.hero-button:hover {
+  transform: translateY(-2px);
+  background: #effaf1;
+}
+
+/* Main content */
+
+.content {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 36px 28px 60px;
+  scroll-margin-top: 20px;
+}
+
+/* Search panel */
+
+.search-panel {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -62px 0 48px;
+  padding: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  background: var(--mp-white);
+  box-shadow: var(--mp-shadow);
+}
+
+.search-field {
+  display: flex;
+  min-width: 0;
+  min-height: 48px;
+  flex: 1;
+  align-items: center;
+  gap: 11px;
+  padding: 0 14px;
+  border: 1px solid var(--mp-border);
+  border-radius: 10px;
+  background: #fbfcfb;
+  color: var(--mp-muted);
+}
+
+.search-field:focus-within {
+  border-color: var(--mp-green);
+  box-shadow: 0 0 0 3px rgba(24, 119, 68, 0.1);
+}
+
+.search-field input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--mp-ink);
+  font-size: 14px;
+}
+
+.search-field input::placeholder {
+  color: #94a3b8;
+}
+
+.city-select-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--mp-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.city-select {
+  min-width: 150px;
+  min-height: 48px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--mp-border);
+  border-radius: 10px;
+  outline: none;
+  background: var(--mp-white);
+  color: var(--mp-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.city-select:focus {
+  border-color: var(--mp-green);
+}
+
+.refresh-button {
+  display: inline-flex;
+  min-height: 48px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--mp-green);
+  border-radius: 10px;
+  background: var(--mp-green);
+  color: var(--mp-white);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: var(--mp-green-dark);
+}
+
+.refresh-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Section heading */
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 25px;
+}
+
+.section-heading h2 {
+  margin: 7px 0 5px;
+  color: var(--mp-ink);
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  line-height: 1.25;
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--mp-muted);
+  font-size: 14px;
+}
+
+.count {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border: 1px solid #d9eadf;
+  border-radius: 999px;
+  background: var(--mp-green-light);
+  color: var(--mp-green-dark);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* Restaurant grid */
+
+.restaurant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 24px;
+}
+
+/* Restaurant cards */
+
+.restaurant-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--mp-border);
+  border-radius: 17px;
+  background: var(--mp-white);
+  box-shadow: 0 3px 12px rgba(20, 45, 29, 0.035);
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.restaurant-card:hover {
+  transform: translateY(-4px);
+  border-color: #c5dfce;
+  box-shadow: 0 14px 34px rgba(20, 45, 29, 0.1);
+}
+
+/* Restaurant images */
+
+.restaurant-photo-wrap {
+  position: relative;
+  width: 100%;
+  height: 230px;
+  overflow: hidden;
+  background: #e9eef0;
+}
+
+.restaurant-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+
+.restaurant-card:hover .restaurant-photo {
+  transform: scale(1.045);
+}
+
+.restaurant-photo-placeholder {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #e8f3eb, #f3f6f2);
+  color: var(--mp-green);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.restaurant-photo-wrap .city-tag {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--mp-green-dark);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Card content */
+
+.restaurant-card-body {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.restaurant-icon {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--mp-green-light);
+  color: var(--mp-green);
+}
+
+.featured-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border: 1px solid #d4ecd9;
+  border-radius: 999px;
+  background: #f0faf2;
+  color: var(--mp-green-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.restaurant-title {
+  margin: 0 0 9px;
+  color: var(--mp-ink);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.35px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin: 0 0 15px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.address {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0 0 12px;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.address svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--mp-green);
+}
+
+.phone-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin: 0 0 12px;
+  color: var(--mp-green);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.phone-link:hover {
+  color: var(--mp-green-dark);
+  text-decoration: underline;
+}
+
+/* Google Maps preview */
+
+.map-frame {
+  width: 100%;
+  height: 190px;
+  margin-top: 9px;
+  overflow: hidden;
+  border: 1px solid var(--mp-border);
+  border-radius: 12px;
+  background: #f1f5f9;
+}
+
+.map-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.map-caption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 9px 0 15px;
+  color: var(--mp-muted);
+  font-size: 12px;
+}
+
+.map-caption svg {
+  flex-shrink: 0;
+  color: var(--mp-green);
+}
+
+/* Directions and map links */
+
+.card-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.action {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 43px;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid var(--mp-border);
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.action svg {
+  flex-shrink: 0;
+}
+
+.action-primary {
+  border-color: var(--mp-green);
+  background: var(--mp-green);
+  color: var(--mp-white);
+}
+
+.action-primary:hover {
+  border-color: var(--mp-green-dark);
+  background: var(--mp-green-dark);
+}
+
+.action-secondary {
+  background: var(--mp-white);
+  color: var(--mp-green);
+}
+
+.action-secondary:hover {
+  border-color: #b9d9c4;
+  background: #f0faf2;
+}
+
+/* Status, loading, and empty states */
+
+.notice {
+  margin: 0 0 25px;
+  padding: 13px 16px;
+  border: 1px solid #f4d7a0;
+  border-radius: 10px;
+  background: #fff9e9;
+  color: #854d0e;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.loading {
+  margin: 0 0 24px;
+  padding: 18px;
+  border: 1px solid var(--mp-border);
+  border-radius: 12px;
+  background: var(--mp-white);
+  color: var(--mp-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.empty {
+  display: flex;
+  min-height: 250px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 32px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  background: var(--mp-white);
+  color: var(--mp-muted);
+  text-align: center;
+}
+
+.empty > svg {
+  color: var(--mp-green);
+}
+
+.empty h3 {
+  margin: 4px 0 0;
+  color: var(--mp-ink);
+  font-size: 20px;
+}
+
+.empty p {
+  margin: 0 0 10px;
+  font-size: 13px;
+}
+
+/* Footer note */
+
+.footer-note {
+  max-width: 800px;
+  margin: 32px auto 0;
+  color: var(--mp-muted);
+  font-size: 12px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+/* Keyboard accessibility */
+
+.marketplace-page a:focus-visible,
+.marketplace-page button:focus-visible,
+.marketplace-page input:focus-visible,
+.marketplace-page select:focus-visible {
+  outline: 3px solid rgba(24, 119, 68, 0.35);
+  outline-offset: 3px;
+}
+
+/* Tablet */
+
+@media (max-width: 1024px) {
+  .content {
+    padding-right: 22px;
+    padding-left: 22px;
+  }
+
+  .restaurant-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .restaurant-photo-wrap {
+    height: 220px;
+  }
+
+  .restaurant-card-body {
+    padding: 17px;
+  }
+
+  .search-panel {
+    flex-wrap: wrap;
+  }
+
+  .search-field {
+    flex-basis: 100%;
+  }
+
+  .city-select-label {
+    flex: 1;
+  }
+
+  .city-select {
+    width: 100%;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  .topbar {
+    min-height: 68px;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .brand {
+    gap: 9px;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .brand strong {
+    font-size: 17px;
+  }
+
+  .brand small {
+    max-width: 145px;
+    font-size: 10px;
+  }
+
+  .top-link {
+    gap: 5px;
+    font-size: 12px;
+  }
+
+  .hero {
+    padding: 54px 20px 76px;
+  }
+
+  .hero h1 {
+    margin: 15px 0;
+    font-size: clamp(32px, 9vw, 43px);
+    letter-spacing: -1.2px;
+  }
+
+  .hero p {
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .hero-button {
+    min-height: 45px;
+    margin-top: 20px;
+    padding: 11px 15px;
+    font-size: 13px;
+  }
+
+  .content {
+    padding: 24px 15px 42px;
+  }
+
+  .search-panel {
+    gap: 11px;
+    margin-top: -55px;
+    margin-bottom: 34px;
+    padding: 13px;
+    border-radius: 13px;
+  }
+
+  .search-field {
+    min-height: 45px;
+    flex-basis: 100%;
+    padding: 0 10px;
+  }
+
+  .search-field input {
+    height: 42px;
+    font-size: 13px;
+  }
+
+  .city-select-label {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .city-select {
+    min-width: 0;
+    min-height: 44px;
+    font-size: 12px;
+  }
+
+  .refresh-button {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .section-heading h2 {
+    font-size: 25px;
+    letter-spacing: -0.6px;
+  }
+
+  .section-heading p {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .section-heading .eyebrow {
+    font-size: 10px;
+  }
+
+  .count {
+    padding: 6px 8px;
+    font-size: 10px;
+  }
+
+  .restaurant-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .restaurant-card {
+    border-radius: 14px;
+  }
+
+  .restaurant-photo-wrap {
+    height: 230px;
+  }
+
+  .restaurant-card-body {
+    padding: 17px;
+  }
+
+  .restaurant-title {
+    font-size: 19px;
+  }
+
+  .description,
+  .address {
+    font-size: 13px;
+  }
+
+  .map-frame {
+    height: 190px;
+  }
+
+  .card-actions {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .action {
+    min-height: 43px;
+    padding: 9px 8px;
+    font-size: 11px;
+  }
+
+  .footer-note {
+    margin-top: 26px;
+    font-size: 11px;
+  }
+}
+
+/* Very small phones */
+
+@media (max-width: 360px) {
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .brand small {
+    max-width: 115px;
+  }
+
+  .top-link {
+    font-size: 11px;
+  }
+
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .action {
+    width: 100%;
+    font-size: 12px;
+  }
+}
+
+/* Respect reduced-motion preferences */
+
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-page *,
+  .marketplace-page *::before,
+  .marketplace-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* =========================================================
+   ADDITION: Restaurant-specific photo backgrounds
+   Append to the end of the existing marketplace.css file.
+   Existing styles are preserved.
+   ========================================================= */
+
+.restaurant-photo-wrap.photo-crunchies {
+  background:
+    linear-gradient(
+      180deg,
+      transparent 60%,
+      rgba(0, 0, 0, 0.18)
+    ),
+    url("/image/crunchies.jpg") center / cover no-repeat;
+}
+
+.restaurant-photo-wrap.photo-nao {
+  background:
+    linear-gradient(
+      180deg,
+      transparent 60%,
+      rgba(0, 0, 0, 0.18)
+    ),
+    url("/image/nao-restaurant.jpg") center / cover no-repeat;
+}
+
+.restaurant-photo-wrap.photo-yellow-chilli {
+  background:
+    linear-gradient(
+      180deg,
+      transparent 60%,
+      rgba(0, 0, 0, 0.18)
+    ),
+    url("/image/yellow-chilli.jpg") center / cover no-repeat;
+}
+
+/* Keep photo backgrounds properly sized on smaller screens. */
+@media (max-width: 640px) {
+  .restaurant-photo-wrap.photo-crunchies,
+  .restaurant-photo-wrap.photo-nao,
+  .restaurant-photo-wrap.photo-yellow-chilli {
+    background-position: center;
+    background-size: cover;
+  }
+}
+
+
+/* =========================================================
+   TASTEAI ENTERPRISE — MARKETPLACE STYLES
+   File: app/marketplace/marketplace.css
+
+   Supports:
+   - Restaurant discovery
+   - Supabase and Foursquare listings
+   - Search and city filters
+   - Near-me location button
+   - Restaurant photos and fallback placeholders
+   - Ratings, prices and distance information
+   - Google Maps previews and directions
+   - Loading, notice and empty states
+   - Desktop, tablet and mobile layouts
+========================================================= */
+
+/* -------------------------
+   1. GLOBAL MARKETPLACE
+------------------------- */
+
+.marketplace-page {
+  --mp-green: #187744;
+  --mp-green-dark: #105b34;
+  --mp-green-deep: #123e2b;
+  --mp-green-light: #e7f6ec;
+  --mp-green-soft: #eff8f1;
+  --mp-yellow: #f5c451;
+  --mp-ink: #152238;
+  --mp-muted: #667085;
+  --mp-border: #e4e9ef;
+  --mp-background: #f6f8fb;
+  --mp-white: #ffffff;
+  --mp-shadow: 0 8px 28px rgba(21, 34, 56, 0.06);
+
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: clip;
+  color: var(--mp-ink);
+  background: var(--mp-background);
+  font-family:
+    "DM Sans",
+    "Segoe UI",
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.marketplace-page *,
+.marketplace-page *::before,
+.marketplace-page *::after {
+  box-sizing: border-box;
+}
+
+.marketplace-page button,
+.marketplace-page input,
+.marketplace-page select {
+  font: inherit;
+}
+
+.marketplace-page button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.marketplace-page a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.marketplace-page img {
+  max-width: 100%;
+}
+
+.marketplace-page ::selection {
+  color: #ffffff;
+  background: var(--mp-green);
+}
+
+/* -------------------------
+   2. ACCESSIBILITY
+------------------------- */
+
+.marketplace-page a:focus-visible,
+.marketplace-page button:focus-visible,
+.marketplace-page input:focus-visible,
+.marketplace-page select:focus-visible {
+  outline: 3px solid rgba(24, 119, 68, 0.35);
+  outline-offset: 3px;
+}
+
+.marketplace-page button:disabled {
+  cursor: not-allowed;
+}
+
+/* -------------------------
+   3. TOP NAVIGATION
+------------------------- */
+
+.marketplace-page .topbar {
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  min-height: 76px;
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid #e6eaf0;
+  box-shadow: 0 2px 12px rgba(21, 34, 56, 0.025);
+}
+
+.marketplace-page .brand {
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+  transition: color 180ms ease;
+}
+
+.marketplace-page .brand:hover {
+  color: var(--mp-green);
+}
+
+.marketplace-page .brand-icon {
+  flex-shrink: 0;
+  box-shadow: 0 5px 12px rgba(24, 119, 68, 0.18);
+}
+
+.marketplace-page .top-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  transition:
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.marketplace-page .top-link:hover {
+  color: var(--mp-green-dark);
+  background: var(--mp-green-soft);
+}
+
+/* -------------------------
+   4. HERO SECTION
+------------------------- */
+
+.marketplace-page .hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 88% 20%,
+      rgba(91, 185, 121, 0.22),
+      transparent 31%
+    ),
+    radial-gradient(
+      circle at 12% 100%,
+      rgba(245, 196, 81, 0.11),
+      transparent 27%
+    ),
+    linear-gradient(
+      135deg,
+      var(--mp-green-deep) 0%,
+      var(--mp-green) 100%
+    );
+}
+
+.marketplace-page .hero::after {
+  position: absolute;
+  z-index: -1;
+  right: -80px;
+  bottom: -190px;
+  width: 390px;
+  height: 390px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.marketplace-page .hero::before {
+  position: absolute;
+  z-index: -1;
+  right: 35px;
+  bottom: -145px;
+  width: 290px;
+  height: 290px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.marketplace-page .hero-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.marketplace-page .eyebrow {
+  font-weight: 700;
+  letter-spacing: 0.25px;
+  background: rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+}
+
+.marketplace-page .hero h1 {
+  max-width: 800px;
+  font-weight: 850;
+  text-wrap: balance;
+}
+
+.marketplace-page .hero p {
+  text-wrap: pretty;
+}
+
+/* -------------------------
+   5. MAIN CONTENT
+------------------------- */
+
+.marketplace-page .content {
+  width: 100%;
+}
+
+.marketplace-page .search-panel {
+  z-index: 3;
+  box-shadow:
+    0 14px 40px rgba(21, 34, 56, 0.075),
+    0 2px 6px rgba(21, 34, 56, 0.025);
+  backdrop-filter: blur(12px);
+}
+
+.marketplace-page .search-field {
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.marketplace-page .search-field:focus-within {
+  border-color: var(--mp-green);
+  box-shadow: 0 0 0 3px rgba(24, 119, 68, 0.09);
+}
+
+.marketplace-page .search-field svg {
+  flex-shrink: 0;
+  color: var(--mp-green);
+}
+
+.marketplace-page .search-field input::placeholder {
+  color: #98a2b3;
+}
+
+.marketplace-page .search-field input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.marketplace-page .city-select {
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.marketplace-page .city-select:hover {
+  border-color: #a8cdb5;
+}
+
+.marketplace-page .city-select:focus {
+  border-color: var(--mp-green);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(24, 119, 68, 0.09);
+}
+
+/* -------------------------
+   6. SEARCH ACTION BUTTONS
+------------------------- */
+
+.marketplace-page .refresh-button,
+.marketplace-page .location-button {
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+  font-size: 13px;
+  letter-spacing: 0.05px;
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.marketplace-page .refresh-button {
+  background: var(--mp-green);
+  box-shadow: 0 4px 10px rgba(24, 119, 68, 0.12);
+}
+
+.marketplace-page .refresh-button:hover:not(:disabled) {
+  background: var(--mp-green-dark);
+  box-shadow: 0 7px 16px rgba(24, 119, 68, 0.2);
+  transform: translateY(-1px);
+}
+
+.marketplace-page .location-button:hover:not(:disabled) {
+  background: #e0f3e5;
+  border-color: #9bc8a8;
+  box-shadow: 0 4px 12px rgba(24, 119, 68, 0.07);
+  transform: translateY(-1px);
+}
+
+.marketplace-page .refresh-button:active:not(:disabled),
+.marketplace-page .location-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.marketplace-page .refresh-button:disabled,
+.marketplace-page .location-button:disabled {
+  opacity: 0.6;
+  box-shadow: none;
+  transform: none;
+}
+
+/* -------------------------
+   7. SECTION HEADING
+------------------------- */
+
+.marketplace-page .section-heading {
+  align-items: center;
+}
+
+.marketplace-page .section-heading h2 {
+  color: var(--mp-ink);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.marketplace-page .section-heading p {
+  max-width: 650px;
+}
+
+.marketplace-page .count {
+  flex-shrink: 0;
+  border: 1px solid #d2ebd9;
+  background: #e9f7ed;
+}
+
+/* -------------------------
+   8. RESTAURANT GRID
+------------------------- */
+
+.marketplace-page .restaurant-grid {
+  align-items: stretch;
+}
+
+.marketplace-page .restaurant-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  transition:
+    box-shadow 240ms ease,
+    border-color 240ms ease,
+    transform 240ms ease;
+}
+
+.marketplace-page .restaurant-card:hover {
+  border-color: #c9dfd0;
+  box-shadow:
+    0 15px 38px rgba(21, 34, 56, 0.075),
+    0 3px 10px rgba(24, 119, 68, 0.035);
+  transform: translateY(-3px);
+}
+
+/* -------------------------
+   9. RESTAURANT PHOTOGRAPHS
+------------------------- */
+
+.marketplace-page .restaurant-photo-wrap {
+  position: relative;
+  isolation: isolate;
+  flex-shrink: 0;
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      #f9fcf8 0%,
+      #eaf4ed 58%,
+      #dcebe0 100%
+    );
+}
+
+.marketplace-page .restaurant-photo {
+  position: relative;
+  z-index: 1;
+  object-fit: cover;
+  object-position: center;
+}
+
+.marketplace-page .restaurant-card:hover .restaurant-photo {
+  filter: saturate(1.035);
+}
+
+.marketplace-page .restaurant-photo-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  color: var(--mp-green);
+  text-align: center;
+  background:
+    radial-gradient(
+      circle at 50% 35%,
+      #f9fcf8 0%,
+      #eaf4ed 58%,
+      #dcebe0 100%
+    );
+}
+
+.marketplace-page .restaurant-photo-placeholder svg {
+  opacity: 0.85;
+}
+
+.marketplace-page .restaurant-photo-placeholder span {
+  max-width: 230px;
+  line-height: 1.5;
+}
+
+/* -------------------------
+   10. RESTAURANT DETAILS
+------------------------- */
+
+.marketplace-page .card-top {
+  align-items: flex-start;
+}
+
+.marketplace-page .restaurant-icon {
+  box-shadow: inset 0 0 0 1px rgba(24, 119, 68, 0.045);
+}
+
+.marketplace-page .restaurant-title h3 {
+  color: var(--mp-ink);
+  font-weight: 800;
+  letter-spacing: -0.35px;
+}
+
+.marketplace-page .city-tag {
+  border: 1px solid #d9eee0;
+  background: #edf8f0;
+}
+
+.marketplace-page .source-tag {
+  max-width: 100%;
+  line-height: 1.3;
+}
+
+.marketplace-page .description {
+  color: #667085;
+  overflow-wrap: anywhere;
+}
+
+.marketplace-page .address {
+  overflow-wrap: anywhere;
+}
+
+.marketplace-page .address span {
+  min-width: 0;
+}
+
+.marketplace-page .restaurant-meta {
+  align-items: center;
+}
+
+.marketplace-page .meta-item {
+  border: 1px solid #edf0f2;
+  line-height: 1.35;
+}
+
+.marketplace-page .meta-item svg {
+  flex-shrink: 0;
+}
+
+.marketplace-page .meta-item:has(svg.lucide-star) {
+  color: #815b0b;
+  background: #fff9e9;
+  border-color: #f5e7b8;
+}
+
+/* -------------------------
+   11. GOOGLE MAP PREVIEW
+------------------------- */
+
+.marketplace-page .map-frame {
+  flex-shrink: 0;
+  border-top: 1px solid #edf0f4;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.marketplace-page .map-caption {
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.marketplace-page .map-caption svg {
+  flex-shrink: 0;
+  color: var(--mp-green);
+}
+
+/* -------------------------
+   12. RESTAURANT ACTIONS
+------------------------- */
+
+.marketplace-page .card-actions {
+  align-items: stretch;
+  margin-top: auto;
+}
+
+.marketplace-page .action {
+  transition:
+    background 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.marketplace-page .action svg {
+  flex-shrink: 0;
+}
+
+.marketplace-page .action-primary {
+  box-shadow: 0 4px 10px rgba(24, 119, 68, 0.1);
+}
+
+.marketplace-page .action-primary:hover {
+  color: #ffffff;
+  background: var(--mp-green-dark);
+  box-shadow: 0 7px 15px rgba(24, 119, 68, 0.18);
+  transform: translateY(-1px);
+}
+
+.marketplace-page .action-secondary:hover {
+  color: var(--mp-green-dark);
+  background: #f6faf7;
+  border-color: #a8cdb5;
+}
+
+.marketplace-page .action-website:hover {
+  color: var(--mp-green-dark);
+  background: #e0f3e5;
+  border-color: #9bc8a8;
+}
+
+.marketplace-page .action:active {
+  transform: translateY(0);
+}
+
+/* -------------------------
+   13. NOTICES AND ERRORS
+------------------------- */
+
+.marketplace-page .notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.marketplace-page .notice a {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* -------------------------
+   14. LOADING AND EMPTY STATES
+------------------------- */
+
+.marketplace-page .loading,
+.marketplace-page .empty {
+  width: 100%;
+  box-shadow: 0 5px 18px rgba(21, 34, 56, 0.025);
+}
+
+.marketplace-page .loading > svg {
+  display: block;
+  color: var(--mp-green);
+}
+
+.marketplace-page .loading > div {
+  color: var(--mp-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.marketplace-page .loading p {
+  margin: 8px auto 0;
+  color: var(--mp-muted);
+  font-size: 13px;
+}
+
+.marketplace-page .empty > svg {
+  display: block;
+  color: var(--mp-green);
+}
+
+.marketplace-page .empty strong {
+  display: block;
+  color: var(--mp-ink);
+  font-size: 16px;
+}
+
+.marketplace-page .empty > div {
+  margin-top: 7px;
+}
+
+/* -------------------------
+   15. FOOTER NOTE
+------------------------- */
+
+.marketplace-page .footer-note {
+  border: 1px solid #deebe1;
+  background:
+    linear-gradient(
+      135deg,
+      #eff7f1 0%,
+      #e9f4ec 100%
+    );
+}
+
+.marketplace-page .footer-note strong {
+  color: var(--mp-green-dark);
+}
+
+/* -------------------------
+   16. SPINNING ICONS
+------------------------- */
+
+.marketplace-page .animate-spin {
+  animation: mp-spin 1s linear infinite;
+}
+
+@keyframes mp-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* -------------------------
+   17. TABLET LAYOUT
+------------------------- */
+
+@media (max-width: 1000px) {
+  .marketplace-page .content {
+    padding-right: 4%;
+    padding-left: 4%;
+  }
+
+  .marketplace-page .search-panel {
+    gap: 10px;
+  }
+
+  .marketplace-page .restaurant-grid {
+    gap: 18px;
+  }
+
+  .marketplace-page .restaurant-photo-wrap {
+    height: 215px;
+  }
+
+  .marketplace-page .card-actions {
+    gap: 8px;
+  }
+
+  .marketplace-page .action {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+}
+
+/* -------------------------
+   18. MOBILE LAYOUT
+------------------------- */
+
+@media (max-width: 760px) {
+  .marketplace-page .topbar {
+    min-height: 68px;
+  }
+
+  .marketplace-page .hero {
+    padding-bottom: 68px;
+  }
+
+  .marketplace-page .hero h1 {
+    max-width: 600px;
+    letter-spacing: -1px;
+  }
+
+  .marketplace-page .content {
+    padding-right: 5%;
+    padding-left: 5%;
+  }
+
+  .marketplace-page .search-panel {
+    gap: 11px;
+    border-radius: 15px;
+    padding: 13px;
+  }
+
+  .marketplace-page .search-field,
+  .marketplace-page .city-select,
+  .marketplace-page .refresh-button,
+  .marketplace-page .location-button {
+    min-height: 48px;
+  }
+
+  .marketplace-page .section-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-top: 29px;
+  }
+
+  .marketplace-page .section-heading h2 {
+    font-size: 23px;
+  }
+
+  .marketplace-page .restaurant-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .marketplace-page .restaurant-card {
+    border-radius: 15px;
+  }
+
+  .marketplace-page .restaurant-photo-wrap {
+    height: clamp(190px, 52vw, 280px);
+  }
+
+  .marketplace-page .map-frame {
+    height: 205px;
+  }
+
+  .marketplace-page .footer-note {
+    padding: 15px;
+  }
+}
+
+/* -------------------------
+   19. SMALL MOBILE SCREENS
+------------------------- */
+
+@media (max-width: 420px) {
+  .marketplace-page .topbar {
+    gap: 8px;
+  }
+
+  .marketplace-page .brand {
+    gap: 8px;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+  }
+
+  .marketplace-page .brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .marketplace-page .brand-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .marketplace-page .top-link {
+    padding-right: 6px;
+    padding-left: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .marketplace-page .hero h1 {
+    font-size: 34px;
+  }
+
+  .marketplace-page .hero p {
+    font-size: 14px;
+  }
+
+  .marketplace-page .section-heading h2 {
+    font-size: 21px;
+  }
+
+  .marketplace-page .count {
+    padding: 7px 10px;
+  }
+
+  .marketplace-page .restaurant-photo-wrap {
+    height: 200px;
+  }
+
+  .marketplace-page .card-top {
+    gap: 11px;
+  }
+
+  .marketplace-page .restaurant-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+  }
+
+  .marketplace-page .restaurant-title h3 {
+    font-size: 17px;
+  }
+
+  .marketplace-page .description {
+    min-height: 0;
+  }
+
+  .marketplace-page .card-actions {
+    flex-direction: column;
+  }
+
+  .marketplace-page .action {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .marketplace-page .map-frame {
+    height: 190px;
+  }
+}
+
+/* -------------------------
+   20. REDUCED MOTION
+------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-page *,
+  .marketplace-page *::before,
+  .marketplace-page *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

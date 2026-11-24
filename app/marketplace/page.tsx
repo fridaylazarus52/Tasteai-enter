@@ -1,0 +1,1729 @@
+"use client";
+
+import "./marketplace.css";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  MapPin,
+  MapPinned,
+  Navigation,
+  Search,
+  Utensils,
+  ExternalLink,
+  LoaderCircle,
+  Store,
+  RefreshCw,
+  Image as ImageIcon,
+  LocateFixed,
+  Globe,
+  Star,
+  Phone,
+} from "lucide-react";
+
+import { createClient } from "@/lib/supabase/client";
+
+type RestaurantSource = "featured" | "supabase" | "geoapify";
+
+type Restaurant = {
+  id: string;
+  public_name: string;
+  description: string;
+  address: string;
+  city: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  phone?: string | null;
+  published?: boolean;
+  image_url?: string | null;
+  assignedImageUrl?: string | null;
+  source: RestaurantSource;
+  website?: string | null;
+  rating?: number | null;
+  priceLevel?: number | null;
+  distance?: number | null;
+  categories?: string[];
+  country?: string;
+};
+
+type GeoapifyRestaurant = {
+  id?: string;
+  name?: string;
+  address?: string;
+  city?: string;
+  region?: string;
+  postcode?: string;
+  country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  phone?: string | null;
+  website?: string | null;
+  rating?: number | null;
+  priceLevel?: number | null;
+  distance?: number | null;
+  categories?: string[];
+  source?: string;
+};
+
+type DiscoveryResponse = {
+  restaurants?: GeoapifyRestaurant[];
+  count?: number;
+  error?: string;
+};
+
+type SupabaseRestaurant = {
+  id: string | number;
+  public_name: string | null;
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
+  phone: string | null;
+  is_published: boolean | null;
+  image_url: string | null;
+};
+
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+const featuredRestaurants: Restaurant[] = [
+  {
+    id: "featured-crunchies-ado",
+    public_name: "Crunchies Fried Chicken",
+    description:
+      "A popular fast-food restaurant serving chicken, rice meals, snacks and pastries.",
+    address: "45 Similoluwa Street, Ado-Ekiti, Ekiti State, Nigeria",
+    city: "Ado-Ekiti",
+    latitude: 7.6374449,
+    longitude: 5.2180297,
+    source: "featured",
+  },
+  {
+    id: "featured-nao-ado",
+    public_name: "NAO Supermarket & Eatery",
+    description:
+      "A supermarket with an eatery on Similoluwa Street. Contact the business to confirm today's food menu.",
+    address: "Similoluwa Street, Ado-Ekiti, Ekiti State, Nigeria",
+    city: "Ado-Ekiti",
+    source: "featured",
+  },
+  {
+    id: "featured-yellow-chilli-lagos",
+    public_name: "The Yellow Chilli",
+    description:
+      "A Nigerian and African restaurant offering local dishes, rice meals, soups and seafood.",
+    address: "35 Joel Ogunnaike Street, GRA Ikeja, Lagos, Nigeria",
+    city: "Lagos",
+    latitude: 6.5867,
+    longitude: 3.3545,
+    source: "featured",
+  },
+];
+
+function normalizedName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function normalizedCity(city: string) {
+  return city
+    .toLowerCase()
+    .replace(/state|nigeria/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function validCoordinate(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+
+/**
+ * Select the best available restaurant image.
+ *
+ * Priority:
+ * 1. Owner-uploaded restaurant image.
+ * 2. Existing local images for featured restaurants.
+ * 3. TasteAI Supabase Storage starter images.
+ *
+ * Starter images are assigned consistently using restaurant
+ * details so the same restaurant keeps the same image on refresh.
+ */
+/**
+ * TasteAI restaurant image assignment.
+ *
+ * Image priority:
+ * 1. Actual owner-uploaded Supabase restaurant photo.
+ * 2. Existing featured restaurant photographs.
+ * 3. Six shared images from Supabase Storage.
+ *
+ * The six shared images are assigned across the full restaurant
+ * collection, not independently inside individual restaurant cards.
+ *
+ * Each image is assigned once before any of the six is reused.
+ */
+
+const restaurantStarterImages = [
+  "burger-fast-food.jpg",
+  "fine-dining-food.jpg",
+  "modern-cafe.jpg",
+  "nigerian-buffet.jpg",
+  "restaurant-exterior.jpg",
+  "rooftop-restaurant.jpg",
+];
+
+function getStarterImageUrl(filename: string): string | null {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  if (!supabaseUrl) {
+    console.error(
+      "NEXT_PUBLIC_SUPABASE_URL is missing. Starter restaurant images cannot load."
+    );
+
+    return null;
+  }
+
+  return `${supabaseUrl.replace(
+    /\/$/,
+    ""
+  )}/storage/v1/object/public/marketplace-media/generated-restaurants/${filename}`;
+}
+
+function getFeaturedRestaurantImage(
+  restaurant: Restaurant
+): string | null {
+  const name = normalizedName(restaurant.public_name);
+
+  if (name.includes("crunchies")) {
+    return "/image/crunchies.jpg";
+  }
+
+  if (name.includes("nao")) {
+    return "/image/nao-restaurant.jpg";
+  }
+
+  if (
+    name.includes("yellowchilli") ||
+    name.includes("yellowchile")
+  ) {
+    return "/image/yellow-chilli.jpg";
+  }
+
+  return null;
+}
+
+function assignRestaurantImages(
+  restaurantList: Restaurant[]
+): Restaurant[] {
+  const eligibleRestaurants = restaurantList
+    .filter((restaurant) => {
+      if (restaurant.image_url) return false;
+
+      if (getFeaturedRestaurantImage(restaurant)) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const keyA = `${a.id}-${normalizedName(a.public_name)}`;
+      const keyB = `${b.id}-${normalizedName(b.public_name)}`;
+
+      return keyA.localeCompare(keyB);
+    });
+
+  const assignments = new Map<string, string>();
+
+  eligibleRestaurants.forEach((restaurant, index) => {
+    const filename =
+      restaurantStarterImages[
+        index % restaurantStarterImages.length
+      ];
+
+    const imageUrl = getStarterImageUrl(filename);
+
+    if (imageUrl) {
+      assignments.set(restaurant.id, imageUrl);
+    }
+  });
+
+  return restaurantList.map((restaurant) => ({
+    ...restaurant,
+    assignedImageUrl:
+      assignments.get(restaurant.id) ?? null,
+  }));
+}
+
+function getRestaurantImage(
+  restaurant: Restaurant
+): string | null {
+  // Owner-uploaded photos always have first priority.
+  if (restaurant.image_url) {
+    return restaurant.image_url;
+  }
+
+  // Keep the existing featured restaurant photographs.
+  const featuredImage =
+    getFeaturedRestaurantImage(restaurant);
+
+  if (featuredImage) {
+    return featuredImage;
+  }
+
+  // Use the assigned Supabase Storage starter image.
+  return restaurant.assignedImageUrl ?? null;
+}
+
+
+
+function mapsSearchUrl(restaurant: Restaurant) {
+  const query =
+    validCoordinate(restaurant.latitude) &&
+    validCoordinate(restaurant.longitude)
+      ? `${restaurant.latitude},${restaurant.longitude}`
+      : `${restaurant.public_name}, ${restaurant.address}`;
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    query
+  )}`;
+}
+
+function directionsUrl(restaurant: Restaurant) {
+  const destination =
+    validCoordinate(restaurant.latitude) &&
+    validCoordinate(restaurant.longitude)
+      ? `${restaurant.latitude},${restaurant.longitude}`
+      : `${restaurant.public_name}, ${restaurant.address}`;
+
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    destination
+  )}`;
+}
+
+function embedMapUrl(restaurant: Restaurant) {
+  const query =
+    validCoordinate(restaurant.latitude) &&
+    validCoordinate(restaurant.longitude)
+      ? `${restaurant.latitude},${restaurant.longitude}`
+      : `${restaurant.public_name}, ${restaurant.address}`;
+
+  return `https://maps.google.com/maps?q=${encodeURIComponent(
+    query
+  )}&z=15&output=embed`;
+}
+
+function formatDistance(distance: number | null | undefined) {
+  if (distance == null || !Number.isFinite(distance) || distance < 0) {
+    return null;
+  }
+
+  if (distance < 1000) {
+    return `${Math.round(distance)} m away`;
+  }
+
+  return `${(distance / 1000).toFixed(1)} km away`;
+}
+
+/**
+ * Handles image loading failures without leaving a broken image
+ * or an overlapping placeholder in the restaurant card.
+ */
+function RestaurantPhoto({
+  restaurant,
+}: {
+  restaurant: Restaurant;
+}) {
+  const image = getRestaurantImage(restaurant);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [image]);
+
+  if (!image || imageFailed) {
+    return (
+      <div className="restaurant-photo-placeholder">
+        <ImageIcon size={34} />
+        <span>
+          {image
+            ? "Restaurant photo unavailable"
+            : "Restaurant photo not available"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className="restaurant-photo"
+      src={image}
+      alt={`${restaurant.public_name} restaurant`}
+      loading="lazy"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
+export default function MarketplacePage() {
+  const [restaurants, setRestaurants] =
+    useState<Restaurant[]>(featuredRestaurants);
+
+  const [city, setCity] = useState("All cities");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [databaseNotice, setDatabaseNotice] = useState("");
+  const [discoveryNotice, setDiscoveryNotice] = useState("");
+  const [userCoordinates, setUserCoordinates] =
+    useState<Coordinates | null>(null);
+  const [locationSearching, setLocationSearching] = useState(false);
+
+  /**
+   * Fetch published restaurants from the TasteAI Supabase database.
+   *
+   * image_url is included so owner-uploaded restaurant photos
+   * can be displayed in the public marketplace.
+   */
+  const fetchSupabaseRestaurants =
+    useCallback(async (): Promise<Restaurant[]> => {
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("marketplace_restaurants")
+        .select(
+          "id, public_name, description, address, city, latitude, longitude, phone, is_published, image_url"
+        )
+        .eq("is_published", true);
+
+      if (error) {
+        console.error("Could not load marketplace restaurants:", {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+        });
+
+        throw error;
+      }
+
+      const rows = (data ?? []) as SupabaseRestaurant[];
+
+      return rows.map((item) => ({
+        id: String(item.id),
+        public_name: item.public_name || "Restaurant",
+        description:
+          item.description ||
+          "Visit this restaurant to explore its offerings.",
+        address:
+          item.address || item.city || "Address not provided",
+        city: item.city || "Other",
+        latitude:
+          item.latitude == null ? null : Number(item.latitude),
+        longitude:
+          item.longitude == null ? null : Number(item.longitude),
+        phone: item.phone || null,
+        image_url: item.image_url || null,
+        published: item.is_published ?? false,
+        source: "supabase",
+      }));
+    }, []);
+
+  /**
+   * Search the server-side Geoapify discovery route.
+   * The secret API key stays on the server.
+   */
+  const fetchGeoapifyRestaurants = useCallback(
+    async (options: {
+      near?: string;
+      coordinates?: Coordinates | null;
+      query?: string;
+      limit?: number;
+    }): Promise<Restaurant[]> => {
+      const params = new URLSearchParams({
+        q: options.query || "restaurant",
+        limit: String(options.limit ?? 50),
+      });
+
+      if (options.coordinates) {
+        params.set(
+          "ll",
+          `${options.coordinates.latitude},${options.coordinates.longitude}`
+        );
+      } else if (options.near) {
+        params.set("near", options.near);
+      }
+
+      const response = await fetch(
+        `/api/ai/restaurants/discover?${params.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        }
+      );
+
+      let result: DiscoveryResponse;
+
+      try {
+        result = (await response.json()) as DiscoveryResponse;
+      } catch {
+        throw new Error(
+          "The restaurant discovery service returned an invalid response."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            `Restaurant discovery failed with status ${response.status}.`
+        );
+      }
+
+      return (result.restaurants ?? [])
+        .filter((item) => Boolean(item.id && item.name))
+        .map((item) => {
+          const locationParts = [
+            item.address,
+            item.city,
+            item.region,
+            item.country,
+          ].filter(
+            (part): part is string =>
+              Boolean(part && part.trim())
+          );
+
+          const address = Array.from(
+            new Set(locationParts)
+          ).join(", ");
+
+          return {
+            id: `geoapify-${item.id}`,
+            public_name: item.name || "Restaurant",
+            description:
+              item.categories?.filter(Boolean).join(" · ") ||
+              "Restaurant discovered through Geoapify. Contact the business to confirm its current offerings.",
+            address: address || "Address not provided",
+            city: item.city || item.region || "Other",
+            latitude: item.latitude ?? null,
+            longitude: item.longitude ?? null,
+            phone: item.phone ?? null,
+            website: item.website ?? null,
+            rating: item.rating ?? null,
+            priceLevel: item.priceLevel ?? null,
+            distance: item.distance ?? null,
+            categories: item.categories ?? [],
+            country: item.country ?? "",
+            image_url: null,
+            source: "geoapify" as const,
+          };
+        });
+    },
+    []
+  );
+
+  /**
+   * Merge listings from all sources without unnecessarily duplicating
+   * the same restaurant.
+   *
+   * Supabase entries are retained as the primary business records.
+   * Featured restaurants are retained when no matching record exists.
+   */
+  const mergeRestaurants = useCallback(
+    (collections: Restaurant[][]): Restaurant[] => {
+      const merged: Restaurant[] = [];
+
+      for (const restaurant of collections.flat()) {
+        const name = normalizedName(restaurant.public_name);
+        const location = normalizedCity(restaurant.city);
+
+        if (!name) {
+          continue;
+        }
+
+        const duplicateIndex = merged.findIndex((existing) => {
+          const existingName = normalizedName(
+            existing.public_name
+          );
+
+          const existingLocation = normalizedCity(existing.city);
+
+          if (existingName !== name) {
+            return false;
+          }
+
+          // Same name in the same city is usually the same listing.
+          if (
+            location &&
+            existingLocation &&
+            location === existingLocation
+          ) {
+            return true;
+          }
+
+          // Also catch exact matches where one source has no city.
+          return (
+            (!location || !existingLocation) &&
+            existingName === name
+          );
+        });
+
+        if (duplicateIndex === -1) {
+          merged.push(restaurant);
+          continue;
+        }
+
+        const existing = merged[duplicateIndex];
+
+        // Prefer the saved Supabase record when it matches an external
+        // or featured listing, while filling missing information.
+        const preferred =
+          existing.source === "supabase"
+            ? existing
+            : restaurant.source === "supabase"
+              ? restaurant
+              : existing;
+
+        const secondary =
+          preferred === existing ? restaurant : existing;
+
+        merged[duplicateIndex] = {
+          ...secondary,
+          ...preferred,
+          description:
+            preferred.description ||
+            secondary.description ||
+            "Visit this restaurant to explore its offerings.",
+          address:
+            preferred.address &&
+            preferred.address !== "Address not provided"
+              ? preferred.address
+              : secondary.address,
+          latitude:
+            preferred.latitude ?? secondary.latitude ?? null,
+          longitude:
+            preferred.longitude ?? secondary.longitude ?? null,
+          phone: preferred.phone ?? secondary.phone ?? null,
+          image_url:
+            preferred.image_url ?? secondary.image_url ?? null,
+          website: preferred.website ?? secondary.website ?? null,
+          rating: preferred.rating ?? secondary.rating ?? null,
+          priceLevel:
+            preferred.priceLevel ?? secondary.priceLevel ?? null,
+          distance: preferred.distance ?? secondary.distance ?? null,
+          categories:
+            preferred.categories ?? secondary.categories ?? [],
+        };
+      }
+
+      return merged;
+    },
+    []
+  );
+
+  /**
+   * Load database, featured, and external listings.
+   *
+   * All cities:
+   *   - Uses the user's coordinates when supplied.
+   *   - Otherwise searches both Lagos and Ado-Ekiti.
+   *
+   * A selected city:
+   *   - Searches that city through Geoapify.
+   *
+   * Database or discovery failures do not erase successful results
+   * from the other sources.
+   */
+  const loadRestaurants = useCallback(
+    async (
+      selectedCity: string = city,
+      coordinates: Coordinates | null = userCoordinates
+    ) => {
+      setLoading(true);
+      setDatabaseNotice("");
+      setDiscoveryNotice("");
+
+      const databasePromise = fetchSupabaseRestaurants()
+        .then((results) => ({
+          results,
+          error: null as string | null,
+        }))
+        .catch((error: unknown) => ({
+          results: [] as Restaurant[],
+          error:
+            error instanceof Error
+              ? error.message
+              : "Could not load database restaurants.",
+        }));
+
+      let discoveryResults: Restaurant[] = [];
+      let discoveryErrors: string[] = [];
+
+      try {
+        if (coordinates) {
+          discoveryResults = await fetchGeoapifyRestaurants({
+            coordinates,
+            limit: 50,
+          });
+        } else if (selectedCity === "All cities") {
+          // Search both locations rather than relying only on featured
+          // restaurant cards or records already saved in Supabase.
+          const searches = await Promise.allSettled([
+            fetchGeoapifyRestaurants({
+              near: "Lagos, Nigeria",
+              limit: 50,
+            }),
+            fetchGeoapifyRestaurants({
+              near: "Ado-Ekiti, Nigeria",
+              limit: 50,
+            }),
+          ]);
+
+          for (const result of searches) {
+            if (result.status === "fulfilled") {
+              discoveryResults.push(...result.value);
+            } else {
+              discoveryErrors.push(
+                result.reason instanceof Error
+                  ? result.reason.message
+                  : "A location search failed."
+              );
+            }
+          }
+        } else {
+          discoveryResults = await fetchGeoapifyRestaurants({
+            near: `${selectedCity}, Nigeria`,
+            limit: 50,
+          });
+        }
+      } catch (error) {
+        discoveryErrors.push(
+          error instanceof Error
+            ? error.message
+            : "Restaurant discovery could not be completed."
+        );
+      }
+
+      const databaseResult = await databasePromise;
+
+      if (databaseResult.error) {
+        console.error(
+          "Supabase marketplace loading failed:",
+          databaseResult.error
+        );
+
+        setDatabaseNotice(
+          "Some saved restaurant listings could not be loaded from the database. Available featured or external listings are still shown."
+        );
+      }
+
+      if (discoveryErrors.length > 0) {
+        console.error(
+          "Geoapify restaurant discovery failed:",
+          discoveryErrors
+        );
+
+        setDiscoveryNotice(
+          "Some external restaurant results could not be loaded. Showing available listings from the other sources."
+        );
+      }
+
+      const merged = mergeRestaurants([
+        databaseResult.results,
+        discoveryResults,
+        featuredRestaurants,
+      ]);
+
+      setRestaurants(merged);
+      setLoading(false);
+    },
+    [
+      city,
+      userCoordinates,
+      fetchSupabaseRestaurants,
+      fetchGeoapifyRestaurants,
+      mergeRestaurants,
+    ]
+  );
+
+  useEffect(() => {
+    void loadRestaurants("All cities", null);
+
+    // Load once on mount. User-initiated city/location changes call
+    // loadRestaurants directly, avoiding automatic repeated API calls.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Request the user's location only when they click Near me.
+   * The browser will ask for permission if it has not been granted.
+   */
+  const findNearbyRestaurants = useCallback(() => {
+    if (!navigator.geolocation) {
+      setDiscoveryNotice(
+        "Your browser does not support location detection. Choose a city instead."
+      );
+      return;
+    }
+
+    setLocationSearching(true);
+    setDiscoveryNotice("");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coordinates: Coordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        setUserCoordinates(coordinates);
+        setCity("All cities");
+        setLocationSearching(false);
+
+        void loadRestaurants("All cities", coordinates);
+      },
+      (error) => {
+        console.error("Browser location request failed:", error);
+
+        setLocationSearching(false);
+
+        if (error.code === error.PERMISSION_DENIED) {
+          setDiscoveryNotice(
+            "Location permission was denied. Allow location access in your browser or choose a city manually."
+          );
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          setDiscoveryNotice(
+            "Your location is currently unavailable. Choose a city and try again."
+          );
+        } else {
+          setDiscoveryNotice(
+            "Location detection timed out. Please try again or choose a city."
+          );
+        }
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 12000,
+        maximumAge: 300000,
+      }
+    );
+  }, [loadRestaurants]);
+
+  const handleCityChange = useCallback(
+    (nextCity: string) => {
+      setCity(nextCity);
+
+      // A manually selected city takes precedence over GPS coordinates.
+      setUserCoordinates(null);
+
+      void loadRestaurants(nextCity, null);
+    },
+    [loadRestaurants]
+  );
+
+ const visibleRestaurants = useMemo(() => {
+  const term = search.trim().toLowerCase();
+
+  // Assign images before filtering, so changing the city or search
+  // does not independently reshuffle the restaurant images.
+  const restaurantsWithImages =
+    assignRestaurantImages(restaurants);
+
+  return restaurantsWithImages.filter((restaurant) => {
+    const restaurantCity = restaurant.city.toLowerCase();
+    const restaurantAddress = restaurant.address.toLowerCase();
+
+    const matchesCity =
+      city === "All cities" ||
+      restaurantCity.includes(city.toLowerCase()) ||
+      (city === "Ado-Ekiti" &&
+        restaurantAddress.includes("ado-ekiti")) ||
+      (city === "Lagos" &&
+        restaurantAddress.includes("lagos"));
+
+    const searchableText = [
+      restaurant.public_name,
+      restaurant.description,
+      restaurant.address,
+      restaurant.city,
+      restaurant.phone ?? "",
+      restaurant.categories?.join(" ") ?? "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return matchesCity && searchableText.includes(term);
+  });
+}, [restaurants, city, search]);
+
+
+
+  return (
+    <main className="marketplace-page">
+      <style jsx>{`
+        .marketplace-page {
+          min-height: 100vh;
+          background: #f6f8fb;
+          color: #152238;
+          padding-bottom: 64px;
+        }
+
+        .topbar {
+          background: #ffffff;
+          border-bottom: 1px solid #e6eaf0;
+          padding: 18px 5%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+        }
+
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: #142b1b;
+          font-size: 21px;
+          font-weight: 800;
+          text-decoration: none;
+        }
+
+        .brand-icon {
+          display: grid;
+          place-items: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 12px;
+          color: white;
+          background: #197444;
+        }
+
+        .top-link {
+          color: #176b40;
+          text-decoration: none;
+          font-weight: 700;
+        }
+
+        .hero {
+          padding: 52px 5% 34px;
+          background: linear-gradient(135deg, #123e2b, #197447);
+          color: white;
+        }
+
+        .hero-inner {
+          max-width: 1180px;
+          margin: 0 auto;
+        }
+
+        .eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          border: 1px solid #ffffff45;
+          border-radius: 99px;
+          padding: 8px 13px;
+          font-size: 13px;
+          color: #e2f7e8;
+        }
+
+        .hero h1 {
+          margin: 18px 0 12px;
+          font-size: clamp(32px, 5vw, 52px);
+          line-height: 1.1;
+          letter-spacing: -1.5px;
+        }
+
+        .hero p {
+          max-width: 670px;
+          margin: 0;
+          line-height: 1.7;
+          color: #e2f2e8;
+          font-size: 16px;
+        }
+
+        .content {
+          max-width: 1180px;
+          margin: 0 auto;
+          padding: 30px 5%;
+        }
+
+        .search-panel {
+          display: grid;
+          grid-template-columns: minmax(220px, 1fr) 190px auto auto;
+          gap: 12px;
+          background: white;
+          border: 1px solid #e5eaf0;
+          border-radius: 18px;
+          padding: 16px;
+          box-shadow: 0 8px 28px #172b3c08;
+          margin-top: -52px;
+          position: relative;
+        }
+
+        .search-field {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: 1px solid #dce3eb;
+          border-radius: 11px;
+          padding: 0 13px;
+          min-height: 48px;
+          color: #667085;
+          background: white;
+        }
+
+        .search-field input {
+          width: 100%;
+          min-width: 0;
+          border: 0;
+          outline: 0;
+          color: #152238;
+          background: transparent;
+          font-size: 14px;
+        }
+
+        .city-select {
+          width: 100%;
+          border: 1px solid #dce3eb;
+          border-radius: 11px;
+          padding: 0 12px;
+          min-height: 48px;
+          background: white;
+          color: #152238;
+          font-size: 14px;
+        }
+
+        .refresh-button {
+          min-height: 48px;
+          border: 0;
+          border-radius: 11px;
+          padding: 0 16px;
+          background: #176b40;
+          color: white;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .location-button {
+          min-height: 48px;
+          border: 1px solid #cfe4d5;
+          border-radius: 11px;
+          padding: 0 14px;
+          background: #eff8f1;
+          color: #176b40;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .refresh-button:disabled,
+        .location-button:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+        }
+
+        .section-heading {
+          display: flex;
+          align-items: end;
+          justify-content: space-between;
+          gap: 12px;
+          margin: 32px 0 18px;
+        }
+
+        .section-heading h2 {
+          margin: 0 0 6px;
+          font-size: 25px;
+          letter-spacing: -0.5px;
+        }
+
+        .section-heading p {
+          margin: 0;
+          color: #667085;
+          font-size: 14px;
+          line-height: 1.6;
+        }
+
+        .count {
+          color: #176b40;
+          background: #e4f5e9;
+          border-radius: 99px;
+          padding: 8px 12px;
+          font-size: 13px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .restaurant-grid {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 22px;
+        }
+
+        .restaurant-card {
+          overflow: hidden;
+          background: white;
+          border: 1px solid #e4e9ef;
+          border-radius: 17px;
+          box-shadow: 0 7px 24px #15223808;
+          min-width: 0;
+        }
+
+        .restaurant-photo-wrap {
+          position: relative;
+          width: 100%;
+          height: 230px;
+          overflow: hidden;
+          background: linear-gradient(135deg, #e8f3eb, #f3f6f2);
+        }
+
+        .restaurant-photo {
+          display: block;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          transition: transform 0.35s ease;
+        }
+
+        .restaurant-card:hover .restaurant-photo {
+          transform: scale(1.045);
+        }
+
+        .restaurant-photo-placeholder {
+          display: flex;
+          width: 100%;
+          height: 100%;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          color: #176b40;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        .card-top {
+          display: flex;
+          align-items: start;
+          gap: 14px;
+          padding: 20px 20px 14px;
+        }
+
+        .restaurant-icon {
+          flex: 0 0 auto;
+          display: grid;
+          place-items: center;
+          width: 48px;
+          height: 48px;
+          border-radius: 13px;
+          color: #176b40;
+          background: #e7f6ec;
+        }
+
+        .restaurant-title {
+          min-width: 0;
+          flex: 1;
+        }
+
+        .restaurant-title h3 {
+          margin: 1px 0 7px;
+          font-size: 19px;
+          line-height: 1.3;
+          overflow-wrap: anywhere;
+        }
+
+        .city-tag {
+          display: inline-block;
+          color: #176b40;
+          background: #eaf7ee;
+          border-radius: 99px;
+          padding: 5px 9px;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .source-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          margin: 7px 5px 0 0;
+          color: #475467;
+          background: #f2f4f7;
+          border-radius: 99px;
+          padding: 5px 9px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        .description {
+          padding: 0 20px;
+          color: #667085;
+          line-height: 1.65;
+          font-size: 14px;
+          min-height: 46px;
+          margin: 0 0 14px;
+        }
+
+        .address {
+          display: flex;
+          align-items: start;
+          gap: 9px;
+          padding: 0 20px 15px;
+          color: #344054;
+          font-size: 13px;
+          line-height: 1.6;
+          overflow-wrap: anywhere;
+        }
+
+        .address svg {
+          flex: 0 0 auto;
+          color: #176b40;
+          margin-top: 2px;
+        }
+
+        .restaurant-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 0 20px 15px;
+        }
+
+        .meta-item {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 9px;
+          border-radius: 8px;
+          background: #f5f7f9;
+          color: #475467;
+          font-size: 12px;
+        }
+
+        .meta-item svg {
+          color: #176b40;
+        }
+
+        .map-frame {
+          display: block;
+          width: 100%;
+          height: 220px;
+          border: 0;
+          background: #e9eef0;
+        }
+
+        .map-caption {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 16px;
+          background: #fafbfd;
+          border-top: 1px solid #edf0f4;
+          font-size: 12px;
+          color: #667085;
+        }
+
+        .map-caption span {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .card-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          padding: 16px 20px 20px;
+        }
+
+        .action {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          flex: 1;
+          min-width: 120px;
+          min-height: 44px;
+          border-radius: 10px;
+          padding: 10px 12px;
+          font-size: 13px;
+          font-weight: 700;
+          text-decoration: none;
+          text-align: center;
+          overflow-wrap: anywhere;
+        }
+
+        .action-primary {
+          background: #176b40;
+          color: white;
+        }
+
+        .action-secondary {
+          border: 1px solid #dce3eb;
+          color: #344054;
+          background: white;
+        }
+
+        .action-website {
+          border: 1px solid #cfe4d5;
+          color: #176b40;
+          background: #eff8f1;
+        }
+
+        .notice {
+          margin-top: 18px;
+          padding: 13px 15px;
+          border-radius: 12px;
+          background: #fff8e7;
+          color: #805b10;
+          border: 1px solid #f3e5bd;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .loading,
+        .empty {
+          background: white;
+          border: 1px solid #e4e9ef;
+          border-radius: 16px;
+          padding: 34px 20px;
+          text-align: center;
+          color: #667085;
+          line-height: 1.7;
+        }
+
+        .loading svg {
+          margin-bottom: 10px;
+        }
+
+        .footer-note {
+          margin-top: 26px;
+          padding: 17px;
+          border-radius: 13px;
+          background: #edf5f0;
+          color: #456050;
+          font-size: 13px;
+          line-height: 1.7;
+        }
+
+        @media (max-width: 1000px) {
+          .search-panel {
+            grid-template-columns: minmax(200px, 1fr) 180px;
+          }
+
+          .refresh-button,
+          .location-button {
+            width: 100%;
+          }
+        }
+
+        @media (max-width: 760px) {
+          .topbar {
+            padding: 14px 5%;
+          }
+
+          .hero {
+            padding: 38px 5% 68px;
+          }
+
+          .search-panel {
+            grid-template-columns: 1fr;
+            margin-top: -48px;
+          }
+
+          .restaurant-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .section-heading {
+            align-items: start;
+          }
+
+          .card-top {
+            padding: 17px 16px 12px;
+          }
+
+          .description,
+          .address {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .restaurant-meta {
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+
+          .card-actions {
+            padding: 14px 16px 17px;
+          }
+
+          .map-frame {
+            height: 205px;
+          }
+
+          .restaurant-photo-wrap {
+            height: 220px;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .brand {
+            font-size: 18px;
+          }
+
+          .top-link {
+            font-size: 13px;
+          }
+
+          .card-actions {
+            flex-direction: column;
+          }
+
+          .action {
+            width: 100%;
+          }
+
+          .restaurant-photo-wrap {
+            height: 200px;
+          }
+
+          .section-heading h2 {
+            font-size: 22px;
+          }
+
+          .count {
+            font-size: 12px;
+          }
+        }
+      `}</style>
+
+      <header className="topbar">
+        <a href="/" className="brand">
+          <span className="brand-icon">
+            <Utensils size={22} />
+          </span>
+          <span>TasteAI Enterprise</span>
+        </a>
+
+        <a className="top-link" href="/">
+          Back to Home
+        </a>
+      </header>
+
+      <section className="hero">
+        <div className="hero-inner">
+          <div className="eyebrow">
+            <MapPinned size={15} />
+            Restaurant discovery
+          </div>
+
+          <h1>Find restaurants near you.</h1>
+
+          <p>
+            Explore restaurant locations in Ado-Ekiti, Lagos, and
+            around your current location. Search restaurants, view
+            addresses, preview locations on the map, and get directions
+            before you visit.
+          </p>
+        </div>
+      </section>
+
+      <div className="content">
+        <div className="search-panel">
+          <label className="search-field">
+            <Search size={19} />
+
+            <input
+              type="search"
+              placeholder="Search restaurant or address..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              aria-label="Search restaurants"
+            />
+          </label>
+
+          <select
+            className="city-select"
+            value={city}
+            onChange={(event) =>
+              handleCityChange(event.target.value)
+            }
+            aria-label="Filter restaurants by city"
+          >
+            <option>All cities</option>
+            <option>Ado-Ekiti</option>
+            <option>Lagos</option>
+          </select>
+
+          <button
+            type="button"
+            className="location-button"
+            onClick={findNearbyRestaurants}
+            disabled={loading || locationSearching}
+          >
+            {locationSearching ? (
+              <LoaderCircle size={16} className="animate-spin" />
+            ) : (
+              <LocateFixed size={16} />
+            )}
+
+            {locationSearching ? "Finding you..." : "Near me"}
+          </button>
+
+          <button
+            type="button"
+            className="refresh-button"
+            onClick={() =>
+              void loadRestaurants(city, userCoordinates)
+            }
+            disabled={loading}
+          >
+            <RefreshCw
+              size={16}
+              className={loading ? "animate-spin" : ""}
+            />
+            Refresh
+          </button>
+        </div>
+
+        {databaseNotice && (
+          <div className="notice" role="status">
+            {databaseNotice}
+          </div>
+        )}
+
+        {discoveryNotice && (
+          <div className="notice" role="status">
+            {discoveryNotice}
+          </div>
+        )}
+
+        <div className="section-heading">
+          <div>
+            <h2>Restaurants to explore</h2>
+
+            <p>
+              Choose a restaurant to see its location, explore
+              available business details, and get directions.
+            </p>
+          </div>
+
+          <span className="count">
+            {visibleRestaurants.length}{" "}
+            {visibleRestaurants.length === 1
+              ? "restaurant"
+              : "restaurants"}
+          </span>
+        </div>
+
+        {loading ? (
+          <div className="loading" role="status">
+            <LoaderCircle
+              size={28}
+              className="animate-spin"
+              style={{ margin: "0 auto" }}
+            />
+
+            <div>Loading restaurant listings...</div>
+
+            <p>
+              Checking saved restaurants and discovering available
+              external listings.
+            </p>
+          </div>
+        ) : visibleRestaurants.length === 0 ? (
+          <div className="empty">
+            <Store size={30} style={{ margin: "0 auto 12px" }} />
+
+            <strong>No matching restaurants found.</strong>
+
+            <div>
+              Try another search term, choose a different city, or
+              refresh the listings.
+            </div>
+
+            <button
+              type="button"
+              className="refresh-button"
+              style={{ margin: "18px auto 0" }}
+              onClick={() =>
+                void loadRestaurants(city, userCoordinates)
+              }
+            >
+              <RefreshCw size={16} />
+              Try again
+            </button>
+          </div>
+        ) : (
+          <div className="restaurant-grid">
+            {visibleRestaurants.map((restaurant) => {
+              const distance = formatDistance(restaurant.distance);
+
+              return (
+                <article
+                  className="restaurant-card"
+                  key={restaurant.id}
+                >
+                  <div className="restaurant-photo-wrap">
+                    <RestaurantPhoto restaurant={restaurant} />
+                  </div>
+
+                  <div className="card-top">
+                    <div className="restaurant-icon">
+                      <Utensils size={23} />
+                    </div>
+
+                    <div className="restaurant-title">
+                      <h3>{restaurant.public_name}</h3>
+
+                      <span className="city-tag">
+                        {restaurant.city}
+                      </span>
+
+                      <div>
+                        <span className="source-tag">
+                          {restaurant.source === "supabase"
+                            ? "TasteAI listing"
+                            : restaurant.source === "geoapify"
+                              ? "External discovery"
+                              : "Featured listing"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="description">
+                    {restaurant.description}
+                  </p>
+
+                  <div className="address">
+                    <MapPin size={18} />
+                    <span>{restaurant.address}</span>
+                  </div>
+
+                  {(restaurant.rating != null ||
+                    restaurant.priceLevel != null ||
+                    distance) && (
+                    <div className="restaurant-meta">
+                      {restaurant.rating != null && (
+                        <span className="meta-item">
+                          <Star size={14} />
+                          {restaurant.rating.toFixed(1)}
+                        </span>
+                      )}
+
+                      {restaurant.priceLevel != null && (
+                        <span className="meta-item">
+                          Price level:{" "}
+                          {"₦".repeat(
+                            Math.min(
+                              4,
+                              Math.max(
+                                1,
+                                Math.floor(restaurant.priceLevel)
+                              )
+                            )
+                          )}
+                        </span>
+                      )}
+
+                      {distance && (
+                        <span className="meta-item">
+                          <Navigation size={13} />
+                          {distance}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {restaurant.phone && (
+                    <div className="address">
+                      <Phone size={16} />
+                      <span>{restaurant.phone}</span>
+                    </div>
+                  )}
+
+                  <iframe
+                    className="map-frame"
+                    title={`Map showing ${restaurant.public_name}`}
+                    src={embedMapUrl(restaurant)}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+
+                  <div className="map-caption">
+                    <span>
+                      <MapPin size={14} />
+                      Location preview
+                    </span>
+
+                    <span>
+                      <Globe size={14} />
+                      Google Maps
+                    </span>
+                  </div>
+
+                  <div className="card-actions">
+                    <a
+                      className="action action-primary"
+                      href={directionsUrl(restaurant)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Navigation size={16} />
+                      Get Directions
+                    </a>
+
+                    <a
+                      className="action action-secondary"
+                      href={mapsSearchUrl(restaurant)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink size={15} />
+                      Open Map
+                    </a>
+
+                    {restaurant.website && (
+                      <a
+                        className="action action-website"
+                        href={restaurant.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Globe size={15} />
+                        Website
+                      </a>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="footer-note">
+          <strong>Before you visit:</strong> Map locations and external
+          restaurant information are provided to help you discover
+          businesses. Confirm opening hours, contact details, and menu
+          availability with each restaurant. Geoapify discovery
+          results are not automatically registered as TasteAI
+          businesses and do not automatically support TasteAI checkout
+          or online ordering. Your existing Supabase restaurant
+          records and featured listings remain part of the marketplace.
+        </div>
+      </div>
+    </main>
+  );
+}
